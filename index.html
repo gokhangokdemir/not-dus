@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Not Düş</title>
+<meta name="theme-color" content="#E5383B">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Not Düş">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Figtree:wght@400;500;600&display=swap">
+<style>
+/* Tek sütun, ortalanmış: üstte büyük kayıt düğmesi, altında notlar */
+:root{
+  --bg:#F2F4F7; --surface:#FFFFFF; --ink:#12151C; --muted:#5E6675; --line:#DFE3EA;
+  --rec:#E5383B; --rec-soft:rgba(229,56,59,.12); --ok:#1F9D63;
+  --display:"Bricolage Grotesque", ui-rounded, system-ui, sans-serif;
+  --body:"Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root{
+  --bg:#0E1014; --surface:#171A21; --ink:#ECEFF4; --muted:#8D95A5; --line:#262B35;
+  --rec:#FF5A5D; --rec-soft:rgba(255,90,93,.16); --ok:#3CC487; color-scheme:dark}}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%}
+body{background:var(--bg);color:var(--ink);font:16px/1.45 var(--body);-webkit-tap-highlight-color:transparent;
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:calc(32px + env(safe-area-inset-bottom,0px));
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:520px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
+button:focus-visible,textarea:focus-visible,input:focus-visible{outline:2px solid var(--rec);outline-offset:2px}
+
+header{text-align:center;padding-top:18px;display:flex;flex-direction:column;align-items:center;gap:4px}
+h1{font:700 26px/1.1 var(--display);margin:0;letter-spacing:-.01em}
+.today{color:var(--muted);font-size:14px}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:99px;background:var(--rec-soft);color:var(--rec);font-weight:600;font-size:14px;margin-top:8px}
+
+/* Kayıt alanı */
+.stage{display:flex;flex-direction:column;align-items:center;gap:14px;padding:12px 0 4px}
+.mic{position:relative;width:150px;height:150px;border-radius:50%;background:var(--rec);color:#fff;display:grid;place-items:center;
+  box-shadow:0 14px 36px -12px var(--rec);transition:transform .15s}
+.mic:active{transform:scale(.96)}
+.mic svg{width:54px;height:54px}
+.mic::before,.mic::after{content:"";position:absolute;inset:0;border-radius:50%;border:2px solid var(--rec);opacity:0}
+.listening .mic::before{animation:ring 1.6s ease-out infinite}
+.listening .mic::after{animation:ring 1.6s .8s ease-out infinite}
+@keyframes ring{from{transform:scale(1);opacity:.6}to{transform:scale(1.55);opacity:0}}
+.bars{display:none;gap:5px;height:54px;align-items:center}
+.listening .bars{display:flex}
+.listening .mic-ico{display:none}
+.bars i{width:6px;border-radius:3px;background:#fff;height:16px;animation:bar .9s ease-in-out infinite}
+.bars i:nth-child(1),.bars i:nth-child(5){animation-delay:.3s}
+.bars i:nth-child(2),.bars i:nth-child(4){animation-delay:.15s}
+@keyframes bar{50%{height:50px}}
+.live{min-height:48px;max-width:420px;text-align:center;font:600 19px/1.35 var(--display);color:var(--ink);text-wrap:balance}
+.live.hint{color:var(--muted);font:500 15px/1.4 var(--body)}
+.type-btn{color:var(--muted);font-size:15px;padding:6px 12px;border-radius:99px;display:inline-flex;gap:6px;align-items:center}
+.type-btn svg{width:18px;height:18px}
+
+/* Not yazma kartı */
+.composer{background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:16px;display:flex;flex-direction:column;gap:14px;
+  box-shadow:0 10px 30px -18px rgba(0,0,0,.25)}
+textarea{width:100%;border:0;background:transparent;color:var(--ink);font:500 18px/1.4 var(--body);resize:none;min-height:56px;padding:4px}
+textarea::placeholder{color:var(--muted)}
+.when{align-self:center;display:inline-flex;align-items:center;gap:8px;padding:8px 16px;border-radius:99px;font-weight:600;font-size:15px;background:var(--rec-soft);color:var(--rec)}
+.when.none{background:var(--bg);color:var(--muted)}
+.when svg{width:17px;height:17px}
+.chips{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.chip{padding:10px 6px;border-radius:12px;background:var(--bg);font-size:14px;font-weight:600;text-align:center;border:1px solid transparent}
+.chip.on{border-color:var(--rec);color:var(--rec);background:var(--rec-soft)}
+#custom{width:100%;padding:10px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit;text-align:center}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn{padding:14px;border-radius:14px;font-weight:600;font-size:16px;background:var(--bg)}
+.btn.main{background:var(--ink);color:var(--bg)}
+
+/* Liste */
+.sec{display:flex;flex-direction:column;gap:8px}
+.sec h2{margin:6px 0 2px;text-align:center;font:600 12px/1 var(--body);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.item{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:12px;display:grid;grid-template-columns:40px 1fr auto;gap:10px;align-items:center}
+.item.due{border-color:var(--rec);box-shadow:0 0 0 3px var(--rec-soft)}
+.item.done .txt{text-decoration:line-through;color:var(--muted)}
+.check{width:32px;height:32px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;justify-self:center}
+.item.done .check{background:var(--ok);border-color:var(--ok);color:#fff}
+.check svg{width:16px;height:16px}
+.mid{min-width:0}
+.txt{font-weight:500;word-wrap:break-word}
+.meta{font-size:13px;color:var(--muted);margin-top:2px;font-variant-numeric:tabular-nums}
+.item.due .meta{color:var(--rec);font-weight:600}
+.acts{display:flex;gap:2px}
+.ic{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;color:var(--muted)}
+.ic svg{width:20px;height:20px}
+.ic.snz{width:auto;padding:0 10px;font-size:13px;font-weight:600;color:var(--rec);background:var(--rec-soft)}
+.more{align-self:center;color:var(--muted);font-size:14px;padding:6px 12px}
+
+.empty{text-align:center;color:var(--muted);display:flex;flex-direction:column;gap:10px;align-items:center;padding:6px 0}
+.empty p{margin:0;font-size:14px}
+.ex{background:var(--surface);border:1px dashed var(--line);border-radius:14px;padding:10px 16px;font-size:15px;color:var(--ink);width:100%;max-width:360px}
+
+/* Hatırlatma ekranı */
+.alarm{position:fixed;inset:0;background:rgba(10,12,16,.55);display:grid;place-items:center;padding:24px;z-index:20;backdrop-filter:blur(4px)}
+.alarm-card{background:var(--surface);border-radius:26px;padding:28px 20px 20px;width:100%;max-width:380px;text-align:center;display:flex;flex-direction:column;gap:16px;align-items:center}
+.bell{width:64px;height:64px;border-radius:50%;background:var(--rec-soft);color:var(--rec);display:grid;place-items:center;animation:shake 1s ease-in-out infinite}
+.bell svg{width:30px;height:30px}
+@keyframes shake{0%,100%{transform:rotate(0)}20%{transform:rotate(-12deg)}40%{transform:rotate(10deg)}60%{transform:rotate(-6deg)}}
+.alarm-txt{font:700 22px/1.3 var(--display);text-wrap:balance;margin:0}
+.alarm .row2{width:100%}
+
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);
+  padding:12px 16px;border-radius:14px;font-size:14px;display:flex;gap:14px;align-items:center;z-index:30;max-width:calc(100% - 32px)}
+.toast button{color:var(--rec);font-weight:700}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Not Düş</h1>
+    <div class="today" id="today"></div>
+    <button class="pill" id="notifBtn" hidden>Bildirimleri aç</button>
+  </header>
+
+  <section class="stage" id="stage">
+    <button class="mic" id="mic" aria-label="Konuşarak not al">
+      <svg class="mic-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3" fill="currentColor"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M8.5 21h7"/></svg>
+      <span class="bars"><i></i><i></i><i></i><i></i><i></i></span>
+    </button>
+    <div class="live hint" id="live">Dokun ve konuş</div>
+    <button class="type-btn" id="typeBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20h4L19 9l-4-4L4 16v4z"/></svg>Yazarak ekle</button>
+  </section>
+
+  <section class="composer" id="composer" hidden>
+    <textarea id="txt" rows="2" placeholder="Ne hatırlatayım?"></textarea>
+    <div class="when none" id="when"></div>
+    <div class="chips" id="chips">
+      <button class="chip" data-q="10m">10 dk</button>
+      <button class="chip" data-q="1h">1 saat</button>
+      <button class="chip" data-q="eve">Bu akşam</button>
+      <button class="chip" data-q="tom">Yarın sabah</button>
+      <button class="chip" data-q="pick">Saat seç</button>
+      <button class="chip" data-q="none">Zamansız</button>
+    </div>
+    <input type="datetime-local" id="custom" hidden>
+    <div class="row2">
+      <button class="btn" id="cancel">Vazgeç</button>
+      <button class="btn main" id="save">Kaydet</button>
+    </div>
+  </section>
+
+  <main id="list"></main>
+</div>
+
+<div class="alarm" id="alarm" hidden>
+  <div class="alarm-card">
+    <div class="bell"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 16V11a6 6 0 1 1 12 0v5l2 2H4l2-2zM10 21h4"/></svg></div>
+    <p class="alarm-txt" id="alarmTxt"></p>
+    <div class="row2">
+      <button class="btn" id="alarmSnooze">10 dk ertele</button>
+      <button class="btn main" id="alarmOk">Tamam</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" hidden><span id="toastTxt"></span><button id="toastBtn" hidden>Geri al</button></div>
+
+<script>
+/*PARSER*/
+const NUM={'yarım':.5,'bir':1,'iki':2,'üç':3,'dört':4,'beş':5,'altı':6,'yedi':7,'sekiz':8,'dokuz':9,'on':10,'on bir':11,'on iki':12,'on beş':15,'yirmi':20,'otuz':30,'kırk':40,'kırk beş':45,'elli':50};
+const NW='(\\d+|yarım|on bir|on iki|on beş|kırk beş|bir|iki|üç|dört|beş|altı|yedi|sekiz|dokuz|on|yirmi|otuz|kırk|elli)';
+const MONTHS=['ocak','şubat','mart','nisan','mayıs','haziran','temmuz','ağustos','eylül','ekim','kasım','aralık'];
+const WD=['pazar','pazartesi','salı','çarşamba','perşembe','cuma','cumartesi'];
+const num=s=>/^\d+$/.test(s)?+s:NUM[s];
+function parseWhen(raw,nowD){
+  const now=nowD||new Date();
+  const s=' '+raw.toLocaleLowerCase('tr-TR').replace(/[’`´]/g,"'")+' ';
+  const orig=' '+raw+' ';
+  const cuts=[];
+  const find=re=>{const m=s.match(re);if(m)cuts.push([m.index,m.index+m[0].length]);return m};
+  const clean=()=>{let o='';for(let i=0;i<orig.length;i++)o+=cuts.some(c=>i>=c[0]&&i<c[1])?' ':orig[i];
+    o=o.replace(/\s(bana\s)?hatırlat\S*/gi,' ').replace(/^\s*bana\s/i,' ').replace(/\s+/g,' ').replace(/^[\s,.;:-]+|[\s,.;:-]+$/g,'');
+    return o?o.charAt(0).toLocaleUpperCase('tr-TR')+o.slice(1):raw.trim()};
+  // Göreli: "20 dakika sonra", "yarım saat sonra", "2 saat içinde"
+  let m=find(new RegExp('\\s'+NW+'\\s*(buçuk\\s*)?(dakika|dk|saat|gün|hafta)\\S*\\s*(sonra|içinde)\\S*'));
+  if(m){let n=num(m[1]);if(m[2])n+=.5;const u={dakika:6e4,dk:6e4,saat:36e5,'gün':864e5,hafta:6048e5}[m[3]];
+    return {at:now.getTime()+Math.round(n*u),clean:clean()}}
+  const base=new Date(now);base.setHours(0,0,0,0);
+  let day=null;
+  if(find(/\s(öbür gün|ertesi gün|yarından sonra)\S*/))day=2;
+  else if(find(/\syarın\S*/))day=1;
+  else if(find(/\sbugün\S*/))day=0;
+  let w=find(/\s(haftaya\s)?(pazartesi|cumartesi|pazar|salı|çarşamba|perşembe|cuma)\S*(\s+günü\S*)?/);
+  if(w){let d=(WD.indexOf(w[2])-now.getDay()+7)%7;if(d===0)d=7;if(w[1]&&d<7)d+=7;day=d}
+  else if(day===null&&find(/\shaftaya\S*/))day=7;
+  let date=null;
+  const dm=find(new RegExp('\\s(\\d{1,2})\\s*('+MONTHS.join('|')+')\\S*'));
+  if(dm){date=new Date(now.getFullYear(),MONTHS.indexOf(dm[2]),+dm[1]);if(date<base)date.setFullYear(date.getFullYear()+1)}
+  let hour=null,min=0;
+  let t=find(/\ssaat\s*(\d{1,2})(?:[:.](\d{2}))?\S*(\s*buçuk\S*)?/);
+  if(t){hour=+t[1];min=t[2]?+t[2]:(t[3]?30:0)}
+  else if(t=find(/\s(\d{1,2})[:.](\d{2})\S*/)){hour=+t[1];min=+t[2]}
+  else if(t=find(/\s(\d{1,2})'?(de|da|te|ta)(ki)?(\s+buçuk\S*)?(?=\s)/)){hour=+t[1];min=t[4]?30:0}
+  else if(t=find(/\ssaat\s+(on bir|on iki|bir|iki|üç|dört|beş|altı|yedi|sekiz|dokuz|on)\S*(\s*buçuk\S*)?/)){hour=NUM[t[1]];min=t[2]?30:0}
+  const p=find(/\s(öğleden sonra|akşamüstü|akşam|sabah|öğlen|öğle|gece)\S*/);
+  const per=p?p[1]:null;
+  if(hour!==null&&(hour>24||min>59))hour=null;
+  if(per){const def={sabah:9,'öğlen':12,'öğle':12,'öğleden sonra':15,'akşamüstü':17,'akşam':19,gece:22};
+    if(hour===null)hour=def[per];
+    else if(['öğleden sonra','akşamüstü','akşam'].includes(per)&&hour<12)hour+=12;
+    else if(per==='gece'&&hour>=6&&hour<12)hour+=12;
+    else if((per==='öğlen'||per==='öğle')&&hour<6)hour+=12;
+  }else if(hour!==null&&hour>=1&&hour<=6)hour+=12;
+  if(day===null&&!date&&hour===null)return null;
+  if(hour===null)hour=9;
+  let at;
+  if(date){date.setHours(hour,min,0,0);at=date}
+  else{at=new Date(base);at.setDate(at.getDate()+(day||0));at.setHours(hour%24,min,0,0);
+    if(day===null&&at<=now)at.setDate(at.getDate()+1)}
+  return {at:at.getTime(),clean:clean()};
+}
+/*END*/
+
+const $=s=>document.querySelector(s);
+const K='notdus.v1';
+let notes=[];try{notes=JSON.parse(localStorage.getItem(K))||[]}catch(e){}
+const store=()=>{try{localStorage.setItem(K,JSON.stringify(notes))}catch(e){}};
+const DAYS=['Pazar','Pazartesi','Salı','Çarşamba','Perşembe','Cuma','Cumartesi'];
+const day0=x=>{const y=new Date(x);y.setHours(0,0,0,0);return y.getTime()};
+function fmtAt(ms){const d=new Date(ms),diff=Math.round((day0(d)-day0(Date.now()))/864e5);
+  const hm=d.toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'});
+  const ds=diff===0?'Bugün':diff===1?'Yarın':diff===-1?'Dün':(diff>1&&diff<7)?DAYS[d.getDay()]:d.toLocaleDateString('tr-TR',{day:'numeric',month:'short'});
+  return ds+' '+hm}
+function rel(ms){const m=Math.round((ms-Date.now())/6e4);if(m<=0)return 'şimdi';if(m<60)return m+' dk sonra';
+  const h=Math.round(m/60);return h<24?h+' sa sonra':Math.round(h/24)+' gün sonra'}
+const esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+$('#today').textContent=new Date().toLocaleDateString('tr-TR',{weekday:'long',day:'numeric',month:'long'});
+
+/* Ses */
+let actx=null;
+function unlockAudio(){try{actx=actx||new (window.AudioContext||window.webkitAudioContext)();actx.resume()}catch(e){}}
+function beep(){if(!actx)return;try{[0,.35,.7].forEach(t=>{const o=actx.createOscillator(),g=actx.createGain();o.frequency.value=880;
+  g.gain.setValueAtTime(.0001,actx.currentTime+t);g.gain.exponentialRampToValueAtTime(.3,actx.currentTime+t+.02);
+  g.gain.exponentialRampToValueAtTime(.0001,actx.currentTime+t+.25);o.connect(g).connect(actx.destination);o.start(actx.currentTime+t);o.stop(actx.currentTime+t+.3)})}catch(e){}}
+
+/* Konuşma tanıma */
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+let rec=null,heard='';
+function setListening(on){$('#stage').classList.toggle('listening',on);
+  const l=$('#live');if(on){l.textContent='Dinliyorum…';l.classList.add('hint')}else if(!heard){l.textContent='Dokun ve konuş';l.classList.add('hint')}}
+$('#mic').onclick=()=>{
+  unlockAudio();
+  if(rec){rec.stop();return}
+  if(!SR){openComposer('');toast('Bu tarayıcı sesi doğrudan tanımıyor. Klavyedeki mikrofon tuşuna basıp konuşabilirsin.');return}
+  heard='';rec=new SR();rec.lang='tr-TR';rec.interimResults=true;rec.continuous=false;
+  rec.onresult=e=>{let f='',i2='';for(let i=0;i<e.results.length;i++){const r=e.results[i];if(r.isFinal)f+=r[0].transcript;else i2+=r[0].transcript}
+    heard=(f+i2).trim();const l=$('#live');l.textContent=heard||'Dinliyorum…';l.classList.toggle('hint',!heard)};
+  rec.onerror=e=>{if(e.error==='not-allowed'||e.error==='service-not-allowed')toast('Mikrofon izni kapalı. Tarayıcı ayarlarından bu siteye mikrofon izni ver.');
+    else if(e.error==='no-speech')toast('Ses duyulmadı, tekrar dene.')};
+  rec.onend=()=>{rec=null;setListening(false);if(heard){openComposer(heard);heard='';$('#live').textContent='Dokun ve konuş';$('#live').classList.add('hint')}};
+  try{rec.start();setListening(true)}catch(e){rec=null;openComposer('')}
+};
+$('#typeBtn').onclick=()=>openComposer('');
+
+/* Not yazma */
+let draft=null;
+function openComposer(text){draft={at:null,manual:false};$('#txt').value=text;$('#custom').hidden=true;
+  $('#composer').hidden=false;reparse();if(!text)setTimeout(()=>$('#txt').focus(),50);
+  $('#composer').scrollIntoView({behavior:'smooth',block:'center'})}
+function closeComposer(){draft=null;$('#composer').hidden=true}
+function reparse(){if(!draft)return;if(!draft.manual){const r=parseWhen($('#txt').value);draft.at=r?r.at:null;draft.clean=r?r.clean:null}renderWhen()}
+const CLOCK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>';
+function renderWhen(){const w=$('#when');
+  if(draft.at){w.className='when';w.innerHTML=CLOCK+esc(fmtAt(draft.at))+' · '+rel(draft.at)}
+  else{w.className='when none';w.innerHTML=CLOCK+'Zamansız not'}
+  document.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',draft.manual&&c.dataset.q===draft.q))}
+$('#txt').addEventListener('input',reparse);
+$('#chips').onclick=e=>{const c=e.target.closest('.chip');if(!c)return;const q=c.dataset.q,n=new Date();let at=null;
+  if(q==='10m')at=Date.now()+6e5;else if(q==='1h')at=Date.now()+36e5;
+  else if(q==='eve'){n.setHours(19,0,0,0);if(n<=new Date())n.setDate(n.getDate()+1);at=n.getTime()}
+  else if(q==='tom'){n.setDate(n.getDate()+1);n.setHours(9,0,0,0);at=n.getTime()}
+  else if(q==='pick'){const i=$('#custom');i.hidden=false;const d=new Date(Date.now()+36e5-new Date().getTimezoneOffset()*6e4);
+    if(!i.value)i.value=d.toISOString().slice(0,16);try{i.showPicker()}catch(_){i.focus()}at=new Date(i.value).getTime()}
+  draft.manual=true;draft.q=q;draft.at=at;if(q!=='pick')$('#custom').hidden=true;renderWhen()};
+$('#custom').addEventListener('input',e=>{const t=new Date(e.target.value).getTime();if(t){draft.manual=true;draft.q='pick';draft.at=t;renderWhen()}});
+$('#cancel').onclick=closeComposer;
+$('#save').onclick=()=>{const raw=$('#txt').value.trim();if(!raw){$('#txt').focus();return}
+  const text=(!draft.manual&&draft.clean)?draft.clean:raw;
+  notes.push({id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),text,at:draft.at,done:false,fired:false});
+  store();closeComposer();render();toast(draft&&draft.at?'Kaydedildi':'Kaydedildi');
+  if(notes[notes.length-1].at)askNotif()};
+
+/* Bildirim */
+let swReg=null;
+if('serviceWorker' in navigator&&location.protocol!=='file:')navigator.serviceWorker.register('sw.js').then(r=>swReg=r).catch(()=>{});
+function notifState(){$('#notifBtn').hidden=!('Notification' in window)||Notification.permission!=='default'}
+function askNotif(){if('Notification' in window&&Notification.permission==='default')Notification.requestPermission().then(notifState)}
+$('#notifBtn').onclick=askNotif;notifState();
+function notify(n){if(!('Notification' in window)||Notification.permission!=='granted')return;
+  const opt={body:n.text,icon:'icon-192.png',badge:'icon-192.png',tag:n.id,vibrate:[200,100,200],requireInteraction:true};
+  if(swReg&&swReg.showNotification)swReg.showNotification('Hatırlatma',opt).catch(()=>{});else try{new Notification('Hatırlatma',opt)}catch(e){}}
+
+/* Hatırlatma döngüsü */
+const queue=[];
+function fire(n){queue.push(n.id);notify(n);beep();try{navigator.vibrate&&navigator.vibrate([300,150,300])}catch(e){}showAlarm()}
+function showAlarm(){if(!$('#alarm').hidden||!queue.length)return;const n=notes.find(x=>x.id===queue[0]);if(!n){queue.shift();return showAlarm()}
+  $('#alarmTxt').textContent=n.text;$('#alarm').hidden=false}
+function nextAlarm(){queue.shift();$('#alarm').hidden=true;render();showAlarm()}
+$('#alarmOk').onclick=()=>{const n=notes.find(x=>x.id===queue[0]);if(n){n.done=true;store()}nextAlarm()};
+$('#alarmSnooze').onclick=()=>{const n=notes.find(x=>x.id===queue[0]);if(n)snooze(n);nextAlarm()};
+function snooze(n){n.at=Date.now()+6e5;n.fired=false;n.done=false;store()}
+function tick(){const now=Date.now();let ch=false;for(const n of notes)if(n.at&&!n.done&&!n.fired&&n.at<=now){n.fired=true;ch=true;fire(n)}if(ch)store();render()}
+setInterval(tick,10000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)tick()});
+
+/* Takvime ekle (.ics) */
+function toCal(n){const f=d=>new Date(d).toISOString().replace(/[-:]/g,'').replace(/\.\d{3}/,'');
+  const e=s=>s.replace(/\\/g,'\\\\').replace(/\n/g,'\\n').replace(/[,;]/g,m=>'\\'+m);
+  const ics=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Not Dus//TR','BEGIN:VEVENT','UID:'+n.id+'@notdus','DTSTAMP:'+f(Date.now()),
+    'DTSTART:'+f(n.at),'DTEND:'+f(n.at+9e5),'SUMMARY:'+e(n.text),'BEGIN:VALARM','ACTION:DISPLAY','DESCRIPTION:'+e(n.text),
+    'TRIGGER:-PT0M','END:VALARM','END:VEVENT','END:VCALENDAR'].join('\r\n');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([ics],{type:'text/calendar'}));a.download='hatirlatma.ics';
+  document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1500)}
+
+/* Liste */
+const I={check:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L19 7"/></svg>',
+  cal:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="4" y="5" width="16" height="15" rx="3"/><path d="M8 3v4M16 3v4M4 10h16"/></svg>',
+  del:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13"/></svg>'};
+let showDone=false;
+function item(n,kind){const meta=n.at?(kind==='due'?'Zamanı geldi · '+fmtAt(n.at):fmtAt(n.at)+(kind==='up'?' · '+rel(n.at):'')):'Zamansız';
+  return `<div class="item ${kind==='due'?'due':''} ${n.done?'done':''}" data-id="${n.id}">
+  <button class="check" data-a="done" aria-label="Tamamlandı">${n.done?I.check:''}</button>
+  <div class="mid"><div class="txt">${esc(n.text)}</div><div class="meta">${meta}</div></div>
+  <div class="acts">${kind==='due'?'<button class="ic snz" data-a="snz">+10 dk</button>':''}
+  ${n.at&&!n.done&&kind!=='due'?`<button class="ic" data-a="cal" aria-label="Telefon takvimine ekle">${I.cal}</button>`:''}
+  <button class="ic" data-a="del" aria-label="Sil">${I.del}</button></div></div>`}
+function render(){const L=$('#list'),open=notes.filter(n=>!n.done);
+  const due=open.filter(n=>n.fired).sort((a,b)=>b.at-a.at),up=open.filter(n=>n.at&&!n.fired).sort((a,b)=>a.at-b.at),
+    free=open.filter(n=>!n.at).reverse(),done=notes.filter(n=>n.done).reverse();
+  let h='';const sec=(t,arr,k)=>arr.length?`<div class="sec"><h2>${t}</h2>${arr.map(n=>item(n,k)).join('')}</div>`:'';
+  h+=sec('Zamanı geldi',due,'due')+sec('Yaklaşan',up,'up')+sec('Notlar',free,'free');
+  if(!open.length)h+=`<div class="empty"><p>Henüz not yok. Şöyle söyleyebilirsin:</p>
+    ${['Yarın saat 10\'da annemi ara','20 dakika sonra fırını kapat','Cuma akşam faturayı öde'].map(x=>`<button class="ex" data-ex="${esc(x)}">“${esc(x)}”</button>`).join('')}</div>`;
+  if(done.length)h+=`<div class="sec"><button class="more" data-a="toggle">${showDone?'Tamamlananları gizle':'Tamamlananlar ('+done.length+')'}</button>${showDone?done.slice(0,30).map(n=>item(n,'done')).join(''):''}</div>`;
+  L.innerHTML=h}
+$('#list').onclick=e=>{const ex=e.target.closest('[data-ex]');if(ex){openComposer(ex.dataset.ex);return}
+  const b=e.target.closest('[data-a]');if(!b)return;if(b.dataset.a==='toggle'){showDone=!showDone;render();return}
+  const id=b.closest('.item').dataset.id,n=notes.find(x=>x.id===id);if(!n)return;
+  if(b.dataset.a==='done'){n.done=!n.done;if(!n.done&&n.at&&n.at>Date.now())n.fired=false;store();render()}
+  else if(b.dataset.a==='snz'){snooze(n);render();toast('10 dakika sonra tekrar hatırlatacağım')}
+  else if(b.dataset.a==='cal')toCal(n);
+  else if(b.dataset.a==='del'){const i=notes.indexOf(n);notes.splice(i,1);store();render();toast('Silindi',()=>{notes.splice(i,0,n);store();render()})}};
+
+/* Kısa mesaj */
+let tt;function toast(msg,undo){$('#toastTxt').textContent=msg;const b=$('#toastBtn');b.hidden=!undo;b.onclick=()=>{undo&&undo();$('#toast').hidden=true};
+  $('#toast').hidden=false;clearTimeout(tt);tt=setTimeout(()=>$('#toast').hidden=true,undo?5000:3500)}
+
+tick();
+</script>
+</body>
+</html>
